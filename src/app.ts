@@ -12,3 +12,6 @@ export const app = new Elysia()
   .group('/api', (app) =>
     app.use(healthRoutes)
   )
+
+
+
