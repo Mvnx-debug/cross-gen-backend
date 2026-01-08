@@ -3,7 +3,7 @@ import { requireAuth, requireRole } from '@/shared/auth'
 
 export const usersRoutes = new Elysia({ prefix: '/users'})
     .use(requireAuth)
-    .get('/me', ({ user }) => ({
+    .get('/me', ({ user }: any) => ({
         id: user.id,
         email: user.email,
         role: user.role,
