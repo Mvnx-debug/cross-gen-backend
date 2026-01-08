@@ -40,9 +40,8 @@ export const requireAuth = new Elysia({ name: 'require-auth' })
 
 export const requireRole = (allowedRoles: UserRole[]) => 
   new Elysia({ name: 'require-role' })
-    .use(requireAuth) // garante que o usuario está autenticado antes
-    .derive(({ user, set }) => {
-      // user já existe por conta do requireAuth
+    .use(requireAuth)
+    .derive(({ user, set }: any) => {
       if (!allowedRoles.includes(user.role)) {
         set.status = 403
         throw new Error('Forbidden: insufficient permissions')
