@@ -1,3 +1,2 @@
-export { auth } from './better-auth';
-export { requireAuth } from './require-auth';
-export { requireRole } from './require-role';
+export { auth } from './better-auth'
+export { authMiddleware, requireAuth, requireRole } from './require-role'

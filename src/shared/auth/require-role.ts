@@ -4,9 +4,9 @@ import { auth } from './better-auth'
 import { db } from '@/shared/db'
 import { users } from '@/shared/db/schema/users'
 import { eq } from 'drizzle-orm'
-import type { AuthSession } from './auth-types'
+import type { AuthSession, AuthUser } from '@/shared/types/context'
 
-export const requireAuth = new Elysia({ name: 'require-auth' })
+export const authMiddleware = new Elysia({ name: 'auth-middleware' })
   .derive(async ({ request, set }) => {
     const session = (await auth.api.getSession({
       headers: request.headers,
@@ -34,20 +34,22 @@ export const requireAuth = new Elysia({ name: 'require-auth' })
         name: session.user.name,
         boxId: user.boxId,
         role: user.role,
-      },
+      } as AuthUser,
     }
   })
 
-export const requireRole = (allowedRoles: UserRole[]) => 
-  new Elysia({ name: 'require-role' })
-    .use(requireAuth)
-    .derive(({ user, set }: any) => {
-      if (!allowedRoles.includes(user.role)) {
-        set.status = 403
-        throw new Error('Forbidden: insufficient permissions')
-      }
-      
-      // retorna vazio porque não adiciona nada ao contexto
-      // só valida e bloqueia se necessário
-      return {}
+export const requireAuth = authMiddleware
+
+export const requireRole = (allowedRoles: UserRole[]) =>
+  new Elysia()
+    .use(authMiddleware)
+    .guard({
+      beforeHandle: (context) => {
+        const { user, set } = context as any as { user: AuthUser; set: any }
+
+        if (!allowedRoles.includes(user.role)) {
+          set.status = 403
+          throw new Error('Forbidden: insufficient permissions')
+        }
+      },
     })
