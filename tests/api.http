@@ -1,0 +1,243 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api
+@token = zmDUK3s5z0iIKoRjzwUTzOBbZrn4o9B0
+@userId = 
+
+#############################################
+# 1. SETUP - Criar Owner + Box
+#############################################
+
+### 1.1 Verificar se precisa setup
+GET {{baseUrl}}/auth/need-setup
+
+### 1.2 Criar Owner (primeira vez)
+POST {{baseUrl}}/auth/setup
+Content-Type: application/json
+
+{
+  "email": "owner@crossgen.com",
+  "password": "senha123",
+  "name": "Owner Principal",
+  "boxName": "CrossFit Champions"
+}
+
+# ✅ Copie o token da resposta e cole em @token acima
+
+#############################################
+# 2. LOGIN (Better Auth)
+#############################################
+
+### 2.1 Login com Better Auth
+POST {{baseUrl}}/auth/sign-in/email
+Content-Type: application/json
+Origin: http://localhost:3000
+
+{
+  "email": "owner@crossgen.com",
+  "password": "senha123"
+}
+
+# ✅ Copie o token da resposta e cole em @token acima
+
+#############################################
+# 3. USUÁRIOS - Perfil
+#############################################
+
+### 3.1 Ver meu perfil
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+### 3.2 Listar todos os usuários do box
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### 3.3 Ver estatísticas de usuários
+GET {{baseUrl}}/users/stats
+Authorization: Bearer {{token}}
+
+#############################################
+# 4. USUÁRIOS - Criar (apenas OWNER)
+#############################################
+
+### 4.1 Criar Coach
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "coach1@crossgen.com",
+  "password": "senha123",
+  "name": "Carlos Coach",
+  "role": "COACH"
+}
+
+### 4.2 Criar Athlete 1
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "athlete1@crossgen.com",
+  "password": "senha123",
+  "name": "Ana Atleta",
+  "role": "ATHLETE"
+}
+
+### 4.3 Criar Athlete 2
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "athlete2@crossgen.com",
+  "password": "senha123",
+  "name": "Pedro Atleta",
+  "role": "ATHLETE"
+}
+
+#############################################
+# 5. USUÁRIOS - Buscar/Atualizar/Deletar
+#############################################
+
+### 5.1 Buscar usuário específico
+# ✅ Substitua {{userId}} pelo ID de um usuário
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### 5.2 Atualizar nome do usuário
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Carlos Coach Atualizado"
+}
+
+### 5.3 Promover Athlete para Coach
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "COACH"
+}
+
+### 5.4 Deletar usuário
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+#############################################
+# 6. TESTES DE VALIDAÇÃO (devem falhar)
+#############################################
+
+### 6.1 Email inválido
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "emailinvalido",
+  "password": "senha123",
+  "name": "Teste",
+  "role": "ATHLETE"
+}
+
+### 6.2 Senha curta
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "teste@crossgen.com",
+  "password": "123",
+  "name": "Teste",
+  "role": "ATHLETE"
+}
+
+### 6.3 Tentar criar OWNER (deve falhar)
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "owner2@crossgen.com",
+  "password": "senha123",
+  "name": "Segundo Owner",
+  "role": "OWNER"
+}
+
+### 6.4 Email duplicado
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "coach1@crossgen.com",
+  "password": "senha123",
+  "name": "Coach Duplicado",
+  "role": "COACH"
+}
+
+#############################################
+# 7. TESTES DE PERMISSÃO - COACH
+#############################################
+
+### 7.1 Login como Coach
+POST {{baseUrl}}/auth/sign-in/email
+Content-Type: application/json
+Origin: http://localhost:3000
+
+{
+  "email": "coach1@crossgen.com",
+  "password": "senha123"
+}
+
+# ✅ Copie o token e use abaixo
+
+### 7.2 Coach pode listar usuários (200 OK)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### 7.3 Coach NÃO pode criar usuários (403 Forbidden)
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "naodevefuncionar@crossgen.com",
+  "password": "senha123",
+  "name": "Não Deve Funcionar",
+  "role": "ATHLETE"
+}
+
+#############################################
+# 8. TESTES DE PERMISSÃO - ATHLETE
+#############################################
+
+### 8.1 Login como Athlete
+POST {{baseUrl}}/auth/sign-in/email
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{
+  "email": "athlete1@crossgen.com",
+  "password": "senha123"
+}
+
+# ✅ Copie o token e use abaixo
+
+### 8.2 Athlete pode ver seu perfil (200 OK)
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+### 8.3 Athlete NÃO pode listar usuários (403 Forbidden)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+#############################################
+# 9. LOGOUT
+#############################################
+
+### 9.1 Logout
+POST {{baseUrl}}/auth/sign-out
+Authorization: Bearer {{token}}
