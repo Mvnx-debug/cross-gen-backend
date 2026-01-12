@@ -4,6 +4,8 @@ node_modules
 #notes
 /notes
 
+/root
+
 # output
 out
 dist

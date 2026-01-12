@@ -6,3 +6,4 @@ export interface DomainUser {
     boxId: string
     role: UserRole
 }
+
