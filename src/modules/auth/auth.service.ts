@@ -1,61 +1,102 @@
-import { db } from '@/shared/db'
-import { user, account } from '@/shared/db/schema/auth'
-import { users } from '@/shared/db/schema/users'
-import { boxes } from '@/shared/db/schema/boxes'
 import { auth } from '@/shared/auth'
+import { authRepository } from './auth.repository'
+import type { CreateOwnerDTO, SetupResponse } from './auth.types'
 
-export async function createOwnerWithBox(data: {
-  email: string
-  password: string
-  name: string
-  boxName: string
-}) {
-  // 1. Criar box
-  const [box] = await db
-    .insert(boxes)
-    .values({
-      name: data.boxName,
-      address: 'Endereço padrão',
-      phone: '(00) 00000-0000',
-    })
-    .returning()
+export class AuthService {
+  async createOwnerWithBox(data: CreateOwnerDTO): Promise<SetupResponse> {
+    let boxId: string | undefined
+    let authUserId: string | undefined
 
-  if (!box) {
-    throw new Error('Falha ao criar box')
+    try {
+      // 1. Verificar email duplicado
+      const existingUser = await authRepository.findUserByEmail(data.email)
+      if (existingUser) {
+        throw new Error('Email já cadastrado')
+      }
+
+      // 2. Criar box
+      const box = await authRepository.createBox(data.boxName)
+      if (!box) {
+        throw new Error('Falha ao criar box')
+      }
+      boxId = box.id
+
+      // 3. Criar usuário no Better Auth
+      const authUser = await auth.api.signUpEmail({
+        body: {
+          email: data.email,
+          password: data.password,
+          name: data.name,
+        },
+      })
+
+      if (!authUser || !(authUser as any).user) {
+        throw new Error('Falha ao criar autenticação')
+      }
+      
+      const createdAuthUserId = (authUser as any).user.id
+      authUserId = createdAuthUserId
+
+      // 4. Criar usuário no domínio
+      const domainUser = await authRepository.createDomainUser({
+        authUserId: createdAuthUserId,
+        email: data.email,
+        name: data.name,
+        boxId: box.id,
+        role: 'OWNER',
+      })
+
+      if (!domainUser) {
+        throw new Error('Falha ao criar usuário do domínio')
+      }
+
+      return {
+        user: {
+          id: domainUser.id,
+          name: domainUser.name,
+          email: domainUser.email,
+          role: domainUser.role,
+        },
+        box: {
+          id: box.id,
+          name: box.name,
+        },
+        token: (authUser as any).token,
+      }
+    } catch (error) {
+      // Rollback
+      await this.rollbackSetup(boxId, authUserId)
+      throw error
+    }
   }
 
-  // 2. Criar usuário no Better Auth
-  const authUser = await auth.api.signUpEmail({
-    body: {
-      email: data.email,
-      password: data.password,
-      name: data.name,
-    },
-  })
-
-  if (!authUser) {
-    throw new Error('Falha ao criar usuário')
+  async isFirstSetup(): Promise<boolean> {
+    const owner = await authRepository.findFirstOwner()
+    return !owner
   }
 
-  // 3. Criar registro na tabela users (domínio)
-  const [domainUser] = await db
-    .insert(users)
-    .values({
-      authUserId: (authUser as any).user.id,
-      email: data.email,
-      name: data.name,
-      boxId: box.id,
-      role: 'OWNER',
-    })
-    .returning()
-
-  if (!domainUser) {
-    throw new Error('Falha ao criar usuário do domínio')
+  async getUserByAuthId(authUserId: string) {
+    return await authRepository.findUserByAuthId(authUserId)
   }
 
-  return {
-    user: domainUser,
-    box,
-    session: authUser,
+  private async rollbackSetup(boxId: string | undefined, authUserId: string | undefined) {
+    if (boxId) {
+      try {
+        await authRepository.deleteBox(boxId)
+      } catch (error) {
+        console.error('Erro no rollback do box:', error)
+      }
+    }
+
+    if (authUserId) {
+      try {
+        await authRepository.deleteAuthUser(authUserId)
+      } catch (error) {
+        console.error('Erro no rollback do auth user:', error)
+      }
+    }
   }
 }
+
+// Exportar instância singleton
+export const authService = new AuthService()
