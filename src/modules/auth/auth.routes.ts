@@ -1,34 +1,18 @@
-import { Elysia, t } from 'elysia'
-import { auth } from '@/shared/auth'
-import { createOwnerWithBox } from './auth.service'
+import { Elysia } from 'elysia'
+import { authController } from './auth.controller'
+import { setupSchema } from './auth.validators'
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
-    .post('/setup', async ({ body, set }) => {
-        try {
-            const result = await createOwnerWithBox({
-                email: body.email,
-                password: body.password,
-                name: body.name,
-                boxName: body.boxName,
-            })
-            
-            return {
-                message: 'Owner e Box criados com sucesso!',
-                user: result.user,
-                box: result.box,
-            }
-        } catch (error) {
-            set.status = 400
-            return {
-                error: error instanceof Error ? error.message : 'Erro ao criar owner',
-            }
-        }
-    }, {
-        body: t.Object({
-            email: t.String(),
-            password: t.String(),
-            name: t.String(),
-            boxName: t.String(),
-        }),
-    })
-    .all('/*', ({ request }) => auth.handler(request))
+  .post('/setup', async ({ body, set }) => {
+    const result = await authController.setup(body)
+    set.status = result.status
+    return result.data
+  }, {
+    body: setupSchema,
+  })
+
+  .get('/need-setup', async ({ set }) => {
+    const result = await authController.needSetup()
+    set.status = result.status
+    return result.data
+  })
