@@ -174,14 +174,7 @@ bun reset-password.ts    # Limpa banco para recomeçar
 
 ---
 
-## 📚 Documentação Adicional
 
-- [📋 Resumo da Sessão](./RESUMO_SESSAO.md) - O que foi feito hoje
-- [🚀 Próximos Passos](./PROXIMOS_PASSOS.md) - Roadmap e features planejadas
-- [🔍 Revisão de Código](./REVISAO_CODIGO.md) - Análise de qualidade e melhorias
-- [🧪 Guia de Testes](./API_TESTING.md) - Como testar todos os endpoints
-
----
 
 ## 🐛 Debug e Troubleshooting
 
