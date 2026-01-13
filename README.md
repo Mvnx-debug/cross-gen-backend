@@ -139,9 +139,7 @@ GET http://localhost:3000/api/users/me
 Cookie: better-auth.session_token=<seu-token>
 ```
 
-📖 **Documentação completa:** Veja [API_TESTING.md](./API_TESTING.md)
 
----
 
 ## 📜 Scripts Disponíveis
 
@@ -219,13 +217,13 @@ Este projeto está sob a licença MIT.
 
 ## 👨‍💻 Autor
 
-Desenvolvido com 💪 por [Seu Nome]
+Desenvolvido com 💪 por Marcos
 
 ---
 
-## 🙏 Agradecimentos
+## 🙏
 
-- [Bun](https://bun.sh) - Runtime incrível
-- [Elysia](https://elysiajs.com) - Framework elegante
+- [Bun](https://bun.sh) - Runtime 
+- [Elysia](https://elysiajs.com) - Framework 
 - [Drizzle ORM](https://orm.drizzle.team) - ORM TypeScript-first
 - [Better Auth](https://better-auth.com) - Autenticação simplificada
